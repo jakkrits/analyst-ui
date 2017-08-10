@@ -17,6 +17,10 @@ const tileCache = {}
  * @return {Object} - the protobuf, converted to JavaScript object
  */
 function readDataTiles (buffer) {
+  console.log(buffer)
+  // If argument is not of type ArrayBuffer, pass it through as-is.
+  if (buffer.constructor !== ArrayBuffer) return buffer
+
   const root = protobuf.Root.fromJSON(speedTileDescriptor)
   const SpeedTile = root.lookupType('SpeedTile')
   const message = SpeedTile.decode(new Uint8Array(buffer))
@@ -67,7 +71,18 @@ export function consolidateTiles (tiles) {
  */
 function cacheTiles (tiles) {
   Object.assign(tileCache, tiles)
+  console.log('cache', tileCache)
+  return tiles
+}
 
+/**
+ * Temporary. We only downloaded 0-level subtiles the first go-round. Now we need
+ * to download the rest, if they exist.
+ *
+ * This will have a lot of repetitive code right now.
+ */
+function downloadMoreThanZeroLevel (tiles) {
+  console.log('zero level tiles', tiles)
   return tiles
 }
 
@@ -125,18 +140,36 @@ export function fetchDataTiles (ids) {
       return filter(responses, (response) => {
         if (response.constructor === ArrayBuffer) {
           return true
-        } else {
-          if (typeof response === 'object' && response.error === true) {
+        } else if (typeof response === 'object') {
+          if (response.error === true) {
             console.warn(`[analyst-ui] Unable to fetch a data tile from ${response.url}. The status code given was ${response.status}.`)
+            return false
           }
-          return false
+
+          // Cached data tiles are objects and can be passed through
+          return true
         }
+
+        // If we land here, reject it
+        return false
       })
     })
     // Read all protobuf messages and convert to plain objects
     .then(results => results.map(readDataTiles))
+    // Temporary shim for tiles not reporting the correct level and tile index
+    // -- TODO - REMOVE THIS
+    .then((tiles) => {
+      return tiles.map((i, j) => {
+        if (Array.isArray(i)) return i
+        i.subtiles[0].level = uniqueIds[j].level
+        i.subtiles[0].index = uniqueIds[j].tile
+        return i
+      })
+    })
+    // -- END TODO - REMOVE THIS
     // Move all subtiles into one array
-    .then(objs => objs.reduce((a, b) => a.concat(b.subtiles), []))
+    .then(objs => objs.reduce((a, b) => a.concat(b.subtiles || b), []))
+    .then(downloadMoreThanZeroLevel)
     // Sort all subtiles according to lowest `startSegmentIndex`
     .then(array => array.sort((a, b) => a.startSegmentIndex - b.startSegmentIndex))
     // Consolidate all subtiles into a single object with lookup keys
