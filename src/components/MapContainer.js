@@ -18,6 +18,8 @@ import * as loadingActionCreators from '../store/actions/loading'
 import { drawBounds } from '../app/region-bounds'
 import { fetchDataTiles } from '../app/data'
 
+import { doStuff } from '../app/_temp'
+
 class MapContainer extends React.Component {
   static propTypes = {
     className: PropTypes.string,
@@ -38,6 +40,8 @@ class MapContainer extends React.Component {
     if (this.props.bounds) {
       drawBounds(this.props.bounds)
     }
+
+    doStuff()
   }
 
   componentDidUpdate (prevProps) {

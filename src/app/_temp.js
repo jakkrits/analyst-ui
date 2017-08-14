@@ -5,6 +5,7 @@ import { setDataSource } from '../lib/tangram'
 
 const OSMLR_TILE_PATH = 'https://osmlr-tiles.s3.amazonaws.com/v0.1/geojson/'
 
+/*
 // Download tiles based on bounding box.
 
 // Using the bounding box of the route, determine which OSMLR
@@ -25,6 +26,8 @@ console.log(tileUrls)
 // Promise.all(promises).then(results => {
 //   console.log(results)
 // })
+
+*/
 
 /**
  * Fetch requested OSMLR geometry tiles and return its result as a
@@ -48,21 +51,26 @@ function fetchOSMLRGeometryTiles (suffixes) {
 // Remove all duplicate suffixes first so that we don't make more requests
 // than we need. Memory management is important here. More than a certain
 // number of tiles and we'll run out of memory.
-fetchOSMLRGeometryTiles(suffixes).then((geo) => {
-  setDataSource('routes', { type: 'GeoJSON', data: geo })
 
-  // lets see if we can find the segmentId as osmlr_id
-  const features = geo.features
-  let found = false
-  for (let i = 0, j = features.length; i < j; i++) {
-    // This property is a number, not a string
-    if (features[i].properties.osmlr_id === 849766009720) {
-      console.log(features[i])
-      found = true
-      break
+export function doStuff () {
+  const suffixes = ['0/002/415', '1/037/741']
+  fetchOSMLRGeometryTiles(suffixes).then((geo) => {
+    setDataSource('routes', { type: 'GeoJSON', data: geo })
+
+    // lets see if we can find the segmentId as osmlr_id
+    const features = geo.features
+    let found = false
+    for (let i = 0, j = features.length; i < j; i++) {
+      // This property is a number, not a string
+      if (features[i].properties.osmlr_id === 849766009720) {
+        console.log(features[i])
+        found = true
+        break
+      }
     }
-  }
-  if (found === false) {
-    console.log('not found')
-  }
-})
+    if (found === false) {
+      console.log('not found')
+    }
+  })
+
+}

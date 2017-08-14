@@ -15,8 +15,8 @@ const scene = {
       draw: {
         lines: {
           order: 500,
-          color: 'red',
-          width: '2px'
+          color: 'blue',
+          width: '3px'
         }
       }
     }
